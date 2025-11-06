@@ -1,3 +1,5 @@
+// Desteny Hernandez De Juan
+// 401 - 23 - 3159
 #ifndef BINARY_SEARCH_TREE_H
 #define BINARY_SEARCH_TREE_H
 
@@ -5,9 +7,12 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <queue>
 using namespace std;
 
-template <typename T> string toStr(const T &value) {
+template <typename T>
+string toStr(const T &value)
+{
   ostringstream oss;
   oss << value;
   return oss.str();
@@ -29,17 +34,21 @@ template <typename T> string toStr(const T &value) {
 // ******************ERRORS********************************
 // Throws UnderflowException as warranted
 
-template <typename Comparable> class BinarySearchTree {
+template <typename Comparable>
+class BinarySearchTree
+{
 public:
   BinarySearchTree() : root{nullptr} {}
 
   // Copy constructor
-  BinarySearchTree(const BinarySearchTree &rhs) : root{nullptr} {
+  BinarySearchTree(const BinarySearchTree &rhs) : root{nullptr}
+  {
     root = clone(rhs.root);
   }
 
   // Move constructor
-  BinarySearchTree(BinarySearchTree &&rhs) : root{rhs.root} {
+  BinarySearchTree(BinarySearchTree &&rhs) : root{rhs.root}
+  {
     rhs.root = nullptr;
   }
 
@@ -47,27 +56,31 @@ public:
   ~BinarySearchTree() { makeEmpty(); }
 
   // Copy assignment
-  BinarySearchTree &operator=(const BinarySearchTree &rhs) {
+  BinarySearchTree &operator=(const BinarySearchTree &rhs)
+  {
     BinarySearchTree copy = rhs;
     std::swap(*this, copy);
     return *this;
   }
 
   // Move assignment
-  BinarySearchTree &operator=(BinarySearchTree &&rhs) {
+  BinarySearchTree &operator=(BinarySearchTree &&rhs)
+  {
     std::swap(root, rhs.root);
     return *this;
   }
 
   // Find the smallest item in the tree. Throw underflow_error if empty.
-  const Comparable &findMin() const {
+  const Comparable &findMin() const
+  {
     if (isEmpty())
       throw std::underflow_error("Can't find in an empty tree!");
     return findMin(root)->element;
   }
 
   // Find the largest item in the tree. Throw underflow_error if empty.
-  const Comparable &findMax() const {
+  const Comparable &findMax() const
+  {
     if (isEmpty())
       throw std::underflow_error("Can't find in an empty tree!");
     return findMax(root)->element;
@@ -81,18 +94,22 @@ public:
   bool isEmpty() const { return root == nullptr; }
 
   // Print the tree contents in sorted order.
-  void printTree(ostream &out = cout) const {
+  void printTree(ostream &out = cout) const
+  {
     if (isEmpty())
       out << "Empty tree" << endl;
     else
       printTree(root, out);
   }
 
-  string toInorderStr() const {
+  // imprime los valores del árbol en orden
+  string toInorderStr() const
+  {
     string st;
     if (isEmpty())
       st = "Empty tree";
-    else {
+    else
+    {
       toInorderStr(root, st);
       st.pop_back();
     }
@@ -111,13 +128,91 @@ public:
   // Remove x from the tree. Nothing is done if x is not found.
   void remove(const Comparable &x) { remove(x, root); }
 
-  string BFT() const {
-    string st;
-    return st;
+  // to-do!
+  string BFT() const
+  {
+    queue<BinaryNode *> ptrNodes;
+    string treeString; // declaro el string que guarda os elementos y sus elementos
+    // desde el nivel 1
+    // guarda el puntero del root en el queue
+    if (root != nullptr)
+    {
+      ptrNodes.push(root);
+    }
+
+    bool levelStart = true;
+    int level = -1;
+    int nodeCounter = 0;
+    int maxNodesInLevel = 1;
+    int missingNodes = 0; // cuanta los nodos que NO van a estar en un nivel
+    int nextMissingNodes = 0;
+
+    treeString += "[";
+    // else no entra al while loop pq el queue está vacía y se sale de la función
+    while (!ptrNodes.empty())
+    {
+      if (levelStart) // si estamos empezando el nivel...
+      {
+        level++; // entramos al otro nivel
+
+        if (level != 0)      // le añade una coma entre cada nivel [..],[...],[...]
+          treeString += ","; // de esta forma no se le añade al último nivel
+        treeString += "[";   // se abre el bracket
+        levelStart = false;  // actualiza a false
+
+        // calcula los nodos maximos que puede tener un nivel, 2^nivel
+        for (int i = level; i > 0; i--)
+          maxNodesInLevel *= 2;
+
+        maxNodesInLevel -= nextMissingNodes; // se le resta los missing nodes de hace 2 niveles atras
+        maxNodesInLevel -= missingNodes;     // se le resta los missing nodes del nivel anterior
+
+        // por cada missing node que hay...
+        // en el proximo nivel van a faltar 2 nodos y se siguen acumulando
+        nextMissingNodes = missingNodes * 2;
+
+        missingNodes = 0; // se actualiza missingNodes
+      }
+
+      // se guarda el puntero del queue en otra variable
+      BinaryNode *g = ptrNodes.front();
+      ptrNodes.pop();
+      treeString += toStr(g->element); // se guarda el elemento
+      nodeCounter++;
+
+      // si se dectecta que el left or right es nulo
+      // entonces la cantidad de nodos maximo para el prox. nivel va ser maxNodesInLevel - missingNodes
+      if (g->left == nullptr)
+        missingNodes++;
+      if (g->right == nullptr)
+        missingNodes++;
+
+      // entra aqui si el counter de nodos es igual al maximo de nodos del nivel
+      if (nodeCounter == maxNodesInLevel)
+      {
+        treeString += "]";
+        levelStart = true;   // se actualiza a que va a iniciar un nuevo nivel
+        maxNodesInLevel = 1; // se actualiza
+        nodeCounter = 0;     // actualiza a 0
+      }
+
+      // coma para los elementos [.,.,.]
+      if (!levelStart) // si levelStart == true, llegamos al ultimo y no se guarda la coma
+        treeString += ",";
+
+      if (g->left != nullptr)
+        ptrNodes.push(g->left);
+
+      if (g->right != nullptr)
+        ptrNodes.push(g->right);
+    }
+    treeString += "]";
+    return treeString;
   }
 
 private:
-  struct BinaryNode {
+  struct BinaryNode
+  {
     Comparable element;
     BinaryNode *left;
     BinaryNode *right;
@@ -137,7 +232,8 @@ private:
    * t is the node that roots the subtree.
    * Set the new root of the subtree.
    */
-  void insert(const Comparable &x, BinaryNode *&t) {
+  void insert(const Comparable &x, BinaryNode *&t)
+  {
     if (t == nullptr)
       t = new BinaryNode{x, nullptr, nullptr};
     else if (x < t->element)
@@ -154,7 +250,8 @@ private:
    * t is the node that roots the subtree.
    * Set the new root of the subtree.
    */
-  void insert(Comparable &&x, BinaryNode *&t) {
+  void insert(Comparable &&x, BinaryNode *&t)
+  {
     if (t == nullptr)
       t = new BinaryNode{std::move(x), nullptr, nullptr};
     else if (x < t->element)
@@ -171,7 +268,8 @@ private:
    * t is the node that roots the subtree.
    * Set the new root of the subtree.
    */
-  void remove(const Comparable &x, BinaryNode *&t) {
+  void remove(const Comparable &x, BinaryNode *&t)
+  {
     if (t == nullptr)
       return; // Item not found; do nothing
     if (x < t->element)
@@ -182,7 +280,9 @@ private:
     {
       t->element = findMin(t->right)->element;
       remove(t->element, t->right);
-    } else {
+    }
+    else
+    {
       BinaryNode *oldNode = t;
       t = (t->left != nullptr) ? t->left : t->right;
       delete oldNode;
@@ -193,7 +293,8 @@ private:
    * Internal method to find the smallest item in a subtree t.
    * Return node containing the smallest item.
    */
-  BinaryNode *findMin(BinaryNode *t) const {
+  BinaryNode *findMin(BinaryNode *t) const
+  {
     if (t == nullptr)
       return nullptr;
     if (t->left == nullptr)
@@ -201,11 +302,9 @@ private:
     return findMin(t->left);
   }
 
-  /**
-   * Internal method to find the largest item in a subtree t.
-   * Return node containing the largest item.
-   */
-  BinaryNode *findMax(BinaryNode *t) const {
+  // encuentra el nodo mayor del árbol
+  BinaryNode *findMax(BinaryNode *t) const
+  {
     if (t != nullptr)
       while (t->right != nullptr)
         t = t->right;
@@ -217,7 +316,8 @@ private:
    * x is item to search for.
    * t is the node that roots the subtree.
    */
-  bool contains(const Comparable &x, BinaryNode *t) const {
+  bool contains(const Comparable &x, BinaryNode *t) const
+  {
     if (t == nullptr)
       return false;
     else if (x < t->element)
@@ -243,8 +343,10 @@ private:
   *****************************************************/
 
   // Internal method to make subtree empty.
-  void makeEmpty(BinaryNode *&t) {
-    if (t != nullptr) {
+  void makeEmpty(BinaryNode *&t)
+  {
+    if (t != nullptr)
+    {
       makeEmpty(t->left);
       makeEmpty(t->right);
       delete t;
@@ -253,8 +355,10 @@ private:
   }
 
   // Internal method to print a subtree rooted at t in sorted order.
-  void printTree(BinaryNode *t, ostream &out) const {
-    if (t != nullptr) {
+  void printTree(BinaryNode *t, ostream &out) const
+  {
+    if (t != nullptr)
+    {
       printTree(t->left, out);
       out << t->element << endl;
       printTree(t->right, out);
@@ -262,16 +366,19 @@ private:
   }
 
   // Internal method to print a subtree rooted at t in sorted order.
-  void toInorderStr(BinaryNode *t, string &st) const {
-    if (t != nullptr) {
-      toInorderStr(t->left, st);
-      st = st + toStr(t->element) + ",";
-      toInorderStr(t->right, st);
+  void toInorderStr(BinaryNode *t, string &st) const
+  {
+    if (t != nullptr) // si el nodo no está vacío
+    {
+      toInorderStr(t->left, st);         // empieza por el menor
+      st = st + toStr(t->element) + ","; // cuando termine ese call stack
+      toInorderStr(t->right, st);        // va por la rama derecha del árbol
     }
   }
 
   // Internal method to clone subtree.
-  BinaryNode *clone(BinaryNode *t) const {
+  BinaryNode *clone(BinaryNode *t) const
+  {
     if (t == nullptr)
       return nullptr;
     else
@@ -280,4 +387,3 @@ private:
 };
 
 #endif
-
